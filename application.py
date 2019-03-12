@@ -78,9 +78,10 @@ class MyClient(discord.Client):
         stat = int(sheet.cell(x[0],x[1]).value)
         const = 0
         if(len(args) > 3):
-            const=args[3:]
-        print("|"+args[:3]+"|"+str(stat)+"|"+str(x))
-        return random.randint(1,6)+random.randint(1,6)+stat+int(const)
+            const=int(args[3:])
+        dice = random.randint(1,6)+random.randint(1,6)
+        roll = "2d6({})+{}({}){}".format(dice, args[:3], stat, (('' if const<0 else '+') +str(const)) if const != 0 else '')
+        return "rolling for {}: {} = {}".format(message.author.nick, roll, dice+stat+const)
 
 
     def load_sheet(self, character):
