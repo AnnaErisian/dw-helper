@@ -2,6 +2,8 @@ import discord
 import asyncio
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import random
+import re
 
 class MyClient(discord.Client):
 
@@ -22,15 +24,10 @@ class MyClient(discord.Client):
             return
         if message.content.startswith('!dw'):
             response = self.execute_command(message, message.content[4:])
-            #sheet = self.sheets.open(message.user.display_name).sheet1
-            #print("------")
-            #print(response)
-            #print("------")
             await message.channel.send(response)
-        elif message.content.startswith('!sleep'):
-            with message.channel.typing():
-                await asyncio.sleep(5.0)
-                await message.channel.send('Done sleeping.')
+        elif message.content.startswith('!r'):
+            response = self.execute_command(message, "r " + message.content[3:])
+            await message.channel.send(response)
 
     def execute_command(self, message, messagecommand):
         #print("==============")
@@ -47,7 +44,6 @@ class MyClient(discord.Client):
                 workbook = self.load_sheet(args)
                 return format_character_description_2(workbook)
             except Exception as e:
-                raise e
                 return "Error"
 
         if command in ['c','cs']:
@@ -57,10 +53,34 @@ class MyClient(discord.Client):
                 workbook = self.load_sheet(args)
                 return format_character_description(workbook.sheet1.get_all_values())
             except Exception as e:
+                return "Error"
+        if command in ['r']:
+            try:
+                return self.roll(message, args)
+            except Exception as e:
                 raise e
                 return "Error"
         else:
             return "invalid command"
+
+    def roll(self, message, args):
+        args = args.replace(" ","")
+        args = args.replace("+","")
+        sheet = self.load_sheet(message.author.nick).sheet1
+        x = {'STR':[6,4],
+                 'DEX':[6,5],
+                 'CON':[6,6],
+                 'INT':[6,7],
+                 'WIS':[6,8],
+                 'CHA':[6,9],
+                 }[args[:3]]
+
+        stat = int(sheet.cell(x[0],x[1]).value)
+        const = 0
+        if(len(args) > 3):
+            const=args[3:]
+        print("|"+args[:3]+"|"+str(stat)+"|"+str(x))
+        return random.randint(1,6)+random.randint(1,6)+stat+int(const)
 
 
     def load_sheet(self, character):
