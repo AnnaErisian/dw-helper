@@ -195,7 +195,7 @@ def format_spells(vals):
         if i >= len(vals):
             break
         row = vals[i]
-        val += "**{}** ({}) *{}*\n".format(row[0],row[1], "prepared" if row[2] in affirmatives else "")
+        val += "**{}** ({}) {}\n".format(row[0],row[1], "*prepared*" if row[2] in affirmatives else "")
     return val
 
 
