@@ -6,6 +6,8 @@ import random
 import re
 import dice
 
+affirmatives = ["ye","yes","Ye","Yes","Y","y"]
+
 class MyClient(discord.Client):
 
     def __init__(self, sheets_creds):
@@ -27,7 +29,7 @@ class MyClient(discord.Client):
             response = self.execute_command(message, message.content[4:])
             await message.channel.send(response)
         elif message.content.startswith('!r'):
-            response = self.execute_command(message, "r " + message.content[3:])
+            response = self.execute_command(message, "rr " + message.content[3:])
             await message.channel.send(response)
 
     def execute_command(self, message, messagecommand):
@@ -38,45 +40,60 @@ class MyClient(discord.Client):
         args = messagecommand[index+1:] if index!=-1 else ""
         #print("Parsed {} into {} and {}.".format(messagecommand, command, args))
         response = "Unable to parse command {}".format(messagecommand)
-        if command in ['cf','csf']:
-            if args == "":
-                args = message.author.nick
-            try:
+        try:
+            if command in ['cf','csf']:
+                if args == "":
+                    args = message.author.nick
                 workbook = self.load_sheet(args)
                 return format_character_description_2(workbook)
-            except Exception as e:
-                print(e)
-                return "Error"
-
-        if command in ['c','cs']:
-            if args == "":
-                args = message.author.nick
-            try:
+            if command in ['c','cs']:
+                if args == "":
+                    args = message.author.nick
                 workbook = self.load_sheet(args)
                 return format_character_description(workbook.sheet1.get_all_values())
-            except Exception as e:
-                print(e)
-                return "Error"
-        if command in ['r']:
-            try:
+            if command in ['r']:
+                return self.roll_move(message, args)
+            if command in ['rr']:
                 return self.roll(message, args)
-            except Exception as e:
-                print(e)
-                return "Error"
-        else:
-            return "invalid command"
+            else:
+                return "invalid command"
+        except Exception as e:
+            print(e)
+            return "Error"
 
     def roll(self, message, args):
-        args = args.replace(" ","")
-        args = args.replace("+","")
         sheet = self.load_sheet(message.author.nick).sheet1
-        x = {'STR':[6,4],
+        roll = args
+        statLocations = {'STR':[6,4],
                  'DEX':[6,5],
                  'CON':[6,6],
                  'INT':[6,7],
                  'WIS':[6,8],
                  'CHA':[6,9],
-                 }[args[:3]]
+                 }
+        for statname, idx in statLocations.items():
+            statbonus = sheet.cell(idx[0], idx[1]).value
+            print("{}|{}".format(statname,statbonus))
+            args = args.replace(statname,statbonus)
+            roll = roll.replace(statname,"{}({})".format(statname,statbonus))
+        print('------------\n')
+        print(roll)
+        print('\n')
+        print(args)
+        print('------------\n')
+        return "rolling for {}: {} = {}".format(message.author.nick, roll, dice.roll(args))
+
+    def roll_move(self, message, args):
+        args = args.replace(" ","")
+        args = args.replace("+","")
+        sheet = self.load_sheet(message.author.nick).sheet1
+        x = {'STR':[6,4],
+             'DEX':[6,5],
+             'CON':[6,6],
+             'INT':[6,7],
+             'WIS':[6,8],
+             'CHA':[6,9],
+             }[args[:3]]
 
         stat = int(sheet.cell(x[0],x[1]).value)
         const = 0
@@ -120,6 +137,8 @@ def format_character_description_2(workbook):
             )
     if charvals[0][0] == 'Ranger':
         character = character + format_companion(workbook.get_worksheet(2).get_all_values()) + "----------\n"
+    if charvals[0][0] == 'Wizard':
+        character = character + format_spells(workbook.get_worksheet(1).get_all_values()) + "----------\n"
     return character
 
 def format_bonds(vals):
@@ -166,6 +185,15 @@ def format_companion(vals):
     +vals[3][3]+"\n"
     +"-----\n"
     +format_inventory(vals,11,1,8,[9,2]))
+
+def format_spells(vals):
+    val = "__**Spells**__\n-----\n"
+    for i in range(2,40):
+        if i >= len(vals):
+            break
+        row = vals[i]
+        val += "**{}** ({}) *{}*\n".format(row[0],row[1], "prepared" if row[2] in affirmatives else "")
+    return val
 
 
 # use creds to create a client to interact with the Google Drive API
