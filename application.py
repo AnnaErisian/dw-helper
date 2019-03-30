@@ -72,16 +72,22 @@ class MyClient(discord.Client):
                  'CHA':[6,9],
                  }
         for statname, idx in statLocations.items():
-            statbonus = sheet.cell(idx[0], idx[1]).value
-            print("{}|{}".format(statname,statbonus))
-            args = args.replace(statname,statbonus)
-            roll = roll.replace(statname,"{}({})".format(statname,statbonus))
-        print('------------\n')
-        print(roll)
-        print('\n')
-        print(args)
-        print('------------\n')
-        return "rolling for {}: {} = {}".format(message.author.nick, roll, dice.roll(args))
+            if statname in args:
+                statbonus = sheet.cell(idx[0], idx[1]).value
+                args = args.replace(statname,statbonus)
+                roll = roll.replace(statname,"{}({})".format(statname,statbonus))
+        #print('------------\n')
+        #print(roll)
+        #print('\n')
+        #print(args)
+        #print('------------\n')
+
+        #+0 forces it to evaluate to an integer
+        result = dice.roll(args+"+0")
+        print(result)
+        print(type(result))
+        print(result.result)
+        return "rolling for {}: {} = {}".format(message.author.nick, roll, result)
 
     def roll_move(self, message, args):
         args = args.replace(" ","")
