@@ -84,9 +84,6 @@ class MyClient(discord.Client):
 
         #+0 forces it to evaluate to an integer
         result = dice.roll(args+"+0")
-        print(result)
-        print(type(result))
-        print(result.result)
         return "rolling for {}: {} = {}".format(message.author.nick, roll, result)
 
     def roll_move(self, message, args):
