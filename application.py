@@ -4,12 +4,13 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import random
 import re
+import dice
 
 class MyClient(discord.Client):
 
-    def __init__(self, sheets_client):
+    def __init__(self, sheets_creds):
         discord.Client.__init__(self)
-        self.sheets = sheets_client
+        self.sheets_creds = sheets_creds
         self.sheetcache = {}
 
     async def on_ready(self):
@@ -44,6 +45,7 @@ class MyClient(discord.Client):
                 workbook = self.load_sheet(args)
                 return format_character_description_2(workbook)
             except Exception as e:
+                print(e)
                 return "Error"
 
         if command in ['c','cs']:
@@ -53,12 +55,13 @@ class MyClient(discord.Client):
                 workbook = self.load_sheet(args)
                 return format_character_description(workbook.sheet1.get_all_values())
             except Exception as e:
+                print(e)
                 return "Error"
         if command in ['r']:
             try:
                 return self.roll(message, args)
             except Exception as e:
-                raise e
+                print(e)
                 return "Error"
         else:
             return "invalid command"
@@ -85,11 +88,8 @@ class MyClient(discord.Client):
 
 
     def load_sheet(self, character):
-        if character in self.sheetcache:
-            return self.sheetcache[character]
-        else:
-            self.sheetcache[character] = self.sheets.open(character)
-            return self.sheetcache[character]
+        self.sheets = gspread.authorize(self.sheets_creds)
+        return self.sheets.open(character)
 
 def format_character_description(vals):
     return ("**__{} the {}__**\n".format(vals[2][1],vals[0][0])
@@ -137,17 +137,17 @@ def format_inventory(vals,b1,b2,l,c1):
         if x[0]!="" or x[1]!="" or x[2]!="":
             #print(x)
             items.append(x)
-    maxload = vals[c1[0]+1][c1[1]][14:]
-    inventory = "**Inventory ({}/{})**\n".format(vals[c1[0]][c1[1]], maxload)
+    currentload = vals[c1[0]+1][c1[1]][14:]
+    inventory = "**Inventory ({}/{})**\n".format(currentload, vals[c1[0]][c1[1]])
     for x in items:
         name = x[0]
-        tags = x[1]
-        weight = x[2]
+        weight = x[1]
+        tags = x[2]
         s = ""
         if tags == "":
-            inventory += "{} (weight {})\n".format(name, weight)
+            inventory += "{} ({} weight)\n".format(name, weight)
         else:
-            inventory += "{} ({}, weight {})\n".format(name,tags,weight)
+            inventory += "{} ({}, {} weight)\n".format(name,tags,weight)
     return inventory
 
 def format_companion(vals):
@@ -171,12 +171,12 @@ def format_companion(vals):
 # use creds to create a client to interact with the Google Drive API
 sheetscope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 sheetcreds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', sheetscope)
-sheetclient = gspread.authorize(sheetcreds)
-print(sheetclient)
+#sheetclient = gspread.authorize(sheetcreds)
+#print(sheetclient)
 
 with open('discordsecret', 'r') as myfile:
     discordkey=myfile.read().replace('\n', '')
 
-client = MyClient(sheetclient)
+client = MyClient(sheetcreds)
 client.run(discordkey)
 
