@@ -76,8 +76,8 @@ class MyClient(discord.Client):
             if statname in args or statname.lower() in args.lower():
                 statbonus = sheet.cell(idx[0], idx[1]).value
                 pattern = re.compile(statname, re.IGNORECASE)
-                args = re.sub(statbonus, args)
-                roll = re.sub("{}({})".format(statname,statbonus), roll)
+                args = re.sub(pattern, statbonus, args)
+                roll = re.sub(pattern, "{}({})".format(statname,statbonus), roll)
         #print('------------\n')
         #print(roll)
         #print('\n')
