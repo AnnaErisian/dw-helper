@@ -75,8 +75,9 @@ class MyClient(discord.Client):
         for statname, idx in statLocations.items():
             if statname in args or statname.lower() in args.lower():
                 statbonus = sheet.cell(idx[0], idx[1]).value
-                args = args.replace(statname,statbonus)
-                roll = roll.replace(statname,"{}({})".format(statname,statbonus))
+                pattern = re.compile(statname, re.IGNORECASE)
+                args = re.sub(statbonus, args)
+                roll = re.sub("{}({})".format(statname,statbonus), roll)
         #print('------------\n')
         #print(roll)
         #print('\n')
@@ -97,7 +98,7 @@ class MyClient(discord.Client):
              'INT':[6,7],
              'WIS':[6,8],
              'CHA':[6,9],
-             }[args[:3]]
+             }[args[:3].upper()]
 
         stat = int(sheet.cell(x[0],x[1]).value)
         const = 0
