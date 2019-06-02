@@ -40,6 +40,7 @@ class MyClient(discord.Client):
         args = messagecommand[index+1:] if index!=-1 else ""
         #print("Parsed {} into {} and {}.".format(messagecommand, command, args))
         response = "Unable to parse command {}".format(messagecommand)
+        command = command.lower()
         try:
             if command in ['cf','csf']:
                 if args == "":
@@ -72,7 +73,7 @@ class MyClient(discord.Client):
                  'CHA':[6,9],
                  }
         for statname, idx in statLocations.items():
-            if statname in args:
+            if statname in args or statname.lower() in args.lower():
                 statbonus = sheet.cell(idx[0], idx[1]).value
                 args = args.replace(statname,statbonus)
                 roll = roll.replace(statname,"{}({})".format(statname,statbonus))
